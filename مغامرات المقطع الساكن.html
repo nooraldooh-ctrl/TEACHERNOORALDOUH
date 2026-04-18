@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مغامرة المقاطع الساكنة 🌟</title>
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --bg-color: #fefaf1;
+            --text-color: #2c3e50;
+            --accent-color: #feca57;
+        }
+
+        body {
+            font-family: 'Cairo', 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#ffeaa7 1px, transparent 1px);
+            background-size: 20px 20px;
+            text-align: center;
+            padding: 10px;
+            margin: 0;
+            user-select: none;
+        }
+
+        .main-wrapper {
+            max-width: 700px;
+            margin: 20px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 8px solid #ffeaa7;
+            position: relative;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 32px;
+            text-shadow: 2px 2px 0px #eee;
+            margin-bottom: 10px;
+        }
+
+        .instruction {
+            font-size: 18px;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            background: #e0f7fa;
+            padding: 10px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        .game-area {
+            background: #f9f9f9;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 3px solid #eee;
+        }
+
+        .image-display {
+            font-size: 100px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .word-display {
+            font-size: 50px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            direction: ltr;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .drop-zone {
+            width: 80px;
+            height: 70px;
+            border: 4px dashed var(--secondary-color);
+            border-radius: 15px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            background: #fff;
+        }
+
+        .drop-zone.hover { background: #e0f7fa; }
+
+        .drop-zone.correct { border-color: #2ecc71; background: #e8f5e9; }
+
+        .static-part { color: var(--text-color); }
+
+        .options-area {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            min-height: 90px;
+        }
+
+        .draggable {
+            padding: 15px 25px;
+            background: var(--accent-color);
+            font-size: 30px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: grab;
+            box-shadow: 0 6px 0px #e1b12c;
+        }
+
+        .next-btn {
+            margin-top: 25px;
+            padding: 15px 40px;
+            font-size: 22px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            display: none;
+        }
+
+        #finish-screen { display: none; }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-15px);}
+            60% {transform: translateY(-7px);}
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary-color);
+            animation: confetti 3s ease-out forwards;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper" id="game-container">
+    <h1>مغامرة المقاطع الساكنة 🌟</h1>
+    <p class="instruction">اسحب المقطع الساكن الأصفر واكشف الكلمة!</p>
+
+    <div id="play-screen">
+        <div class="game-area">
+            <span id="image-placeholder" class="image-display">🏫</span>
+
+            <div class="word-display">
+                <span class="static-part" id="word-end">ـرَسَة</span>
+                <div class="drop-zone" id="drop-zone">?</div>
+            </div>
+        </div>
+
+        <div class="options-area" id="options-container"></div>
+
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">التالي</button>
+    </div>
+
+    <div id="finish-screen">
+        <div class="image-display">🏆</div>
+        <h2>أحسنت!</h2>
+        <button class="next-btn" style="display:inline-block;" onclick="location.reload()">إعادة</button>
+    </div>
+</div>
+
+<script>
+const quizData = [
+    { image: '🏫', correct: 'مَدْ', rest: 'ـرَسَة', options: ['مَدْ','بَحْ','يَكْ'] },
+    { image: '🌊', correct: 'بَحْ', rest: 'ـر', options: ['قَصْ','بَحْ','تَمْ'] },
+    { image: '✍️', correct: 'يَكْ', rest: 'ـتُبُ', options: ['يَكْ','نَجْ','مَدْ'] },
+    { image: '🌴', correct: 'تَمْ', rest: 'ـر', options: ['شَمْ','تَمْ','بَحْ'] },
+    { image: '🏰', correct: 'قَصْ', rest: 'ـر', options: ['قَصْ','يَكْ','نَجْ'] },
+    { image: '☀️', correct: 'شَمْ', rest: 'ـس', options: ['مَدْ','شَمْ','تَمْ'] }
+];
+
+let i = 0;
+let dragged = null;
+
+const img = document.getElementById("image-placeholder");
+const rest = document.getElementById("word-end");
+const drop = document.getElementById("drop-zone");
+const options = document.getElementById("options-container");
+const next = document.getElementById("next-btn");
+
+function load() {
+    const q = quizData[i];
+    img.textContent = q.image;
+    rest.textContent = q.rest;
+    drop.textContent = "?";
+    options.innerHTML = "";
+
+    q.options.sort(() => Math.random() - 0.5).forEach(o => {
+        const d = document.createElement("div");
+        d.className = "draggable";
+        d.textContent = o;
+        d.draggable = true;
+        d.ondragstart = e => dragged = o;
+        d.ondragend = () => dragged = null;
+        options.appendChild(d);
+    });
+}
+
+drop.ondragover = e => e.preventDefault();
+
+drop.ondrop = e => {
+    if (dragged === quizData[i].correct) {
+        drop.textContent = dragged;
+        next.style.display = "block";
+    } else {
+        alert("حاول مرة أخرى 💪");
+    }
+};
+
+function nextQuestion() {
+    i++;
+    if (i < quizData.length) load();
+    else document.getElementById("play-screen").style.display = "none";
+}
+
+load();
+</script>
+
+</body>
+</html>
